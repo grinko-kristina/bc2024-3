@@ -14,6 +14,7 @@ if (!options.input) {
     console.log('Please, specify input file');
     return;
 }
+
 if (!fs.existsSync(options.input)) {
     console.log('Cannot find input file');
     return;
@@ -21,17 +22,40 @@ if (!fs.existsSync(options.input)) {
 
 fs.readFile(options.input, 'utf-8', (err, data) => {
     if (err) {
-        console.log(err);
+        console.log("Error reading file:", err);
         return;
     }
-    if(options.output){
-        fs.writeFile(options.output, data, 'utf-8', (err) => {
+
+    let parsedData;
+    try {
+        parsedData = JSON.parse(data);
+        console.log("Parsed data structure:", JSON.stringify(parsedData, null, 2));
+    } catch (e) {
+        console.log("Error parsing JSON:", e);
+        return;
+    }
+
+    const filteredData = parsedData.filter(item =>
+        item.txt === 'Доходи, усього' || item.txt === 'Витрати, усього'
+    );
+    console.log("Filtered data:", filteredData);
+
+    const finalData = filteredData
+        .map(item => `${item.txt}:${item.value}`)
+        .join('\n');
+
+    console.log("Final formatted data:", finalData);
+
+    if (options.output) {
+        fs.writeFile(options.output, finalData, 'utf-8', (err) => {
             if (err) {
-                console.log(err);
+                console.log("Error writing to file:", err);
+                return;
             }
+            console.log(`Data successfully written to ${options.output}`);
         });
     }
-    if(options.display){
-        console.log(data);
+    if (options.display) {
+        console.log("Displaying data:\n", finalData);
     }
 });
